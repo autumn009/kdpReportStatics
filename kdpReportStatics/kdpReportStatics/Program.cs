@@ -1,4 +1,5 @@
 ﻿using CsvHelper;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -20,16 +21,23 @@ using (var reader = new StreamReader(src1FileName))
 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture)) {
     var records = csv.GetRecords<電子書籍の注文数>();
     foreach (var record in records) {
-        if (!dic.ContainsKey(record.タイトル)) dic.Add(record.タイトル, new OutputRecord());
+        if (!dic.ContainsKey(record.タイトル)) {
+            var nr = new OutputRecord();
+            nr.FirstDate = record.日付;
+            nr.Name = record.タイトル;
+            dic.Add(record.タイトル, nr);
+        }
         dic[record.タイトル].PricedCountSum += record.有料配布数;
         dic[record.タイトル].NonPricedCountSum += record.無料配布数;
         updateDate(dic[record.タイトル], record.日付);
     }
 }
 
-using (var writer = new StreamWriter(dstFileName))
-using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
-    csv.WriteRecords(dic.Values.OrderBy(c=>c.FirstDate).ToArray());
+using (var writer = new StreamWriter(dstFileName)) {
+    writer.Write((char)0xfeff);
+    using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
+        csv.WriteRecords(dic.Values.OrderBy(c => c.FirstDate).ToArray());
+    }
 }
 
 ProcessStartInfo pi = new ProcessStartInfo() {
@@ -40,10 +48,15 @@ Process.Start(pi);
 Console.WriteLine("Done");
 
 void updateDate(OutputRecord rec, string date) {
-    if (rec.FirstDate == null) rec.FirstDate = date;
+    if (rec.FirstDate == null) rec.FirstDate = dateFixer(date);
     else {
-        if (string.Compare(rec.FirstDate, date)>0) rec.FirstDate = date;
+        if (string.Compare(rec.FirstDate, date)>0) rec.FirstDate = dateFixer(date);
     }
+}
+
+string dateFixer(string s) {
+    var date = DateTime.ParseExact(s, "yyyy-MM-dd", null);
+    return date.ToString("yyyy/MM/dd");
 }
 
 public class 電子書籍の注文数 {
