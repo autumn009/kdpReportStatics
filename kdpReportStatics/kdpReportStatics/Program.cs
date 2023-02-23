@@ -48,6 +48,10 @@ using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture)) {
     }
 }
 
+foreach (var item in dic.Values) {
+    item.MyScore = item.PricedCountSum + item.KENPSum / 5;
+}
+
 using (var writer = new StreamWriter(dstFileName)) {
     writer.Write((char)0xfeff);
     using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
@@ -125,5 +129,5 @@ public class OutputRecord {
     public string? Name { get; set; }
     public int KENPSum { get; set; }
     public int PricedCountSum { get; set; }
-    public int NonPricedCountSum { get; set; }
+    public int MyScore { get; set; }
 }
