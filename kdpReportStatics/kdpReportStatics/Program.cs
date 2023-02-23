@@ -33,6 +33,21 @@ using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture)) {
     }
 }
 
+using (var reader = new StreamReader(src2FileName))
+using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture)) {
+    var records = csv.GetRecords<既読KENP>();
+    foreach (var record in records) {
+        if (!dic.ContainsKey(record.タイトル)) {
+            var nr = new OutputRecord();
+            nr.FirstDate = dateFixer(record.日付);
+            nr.Name = record.タイトル;
+            dic.Add(record.タイトル, nr);
+        }
+        dic[record.タイトル].KENPSum += record.KENP;
+        updateDate(dic[record.タイトル], record.日付);
+    }
+}
+
 using (var writer = new StreamWriter(dstFileName)) {
     writer.Write((char)0xfeff);
     using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture)) {
@@ -96,11 +111,12 @@ public class 電子書籍の注文数 {
 
 public class 既読KENP
 {
-    public string? Date { get; set; }
-    public string? Name { get; set; }
-    public string? Author { get; set; }
+    public string? 日付 { get; set; }
+    public string? タイトル { get; set; }
+    public string? 著者名 { get; set; }
     public string? ASIN { get; set; }
-    public string? Market { get; set; }
+    public string? マーケットプレイス { get; set; }
+    [Name("既読 KENP (Kindle Edition Normalized Pages)")]
     public int KENP { get; set; }
 }
 
